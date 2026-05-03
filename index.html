@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Decision Space — Cheap Sensationalism</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --bg: #0a0b10;
+        --text: #f0ede6;
+        --muted: #8a8680;
+        --dim: #44413b;
+        --amber: #e8e048;
+        --cyan: #00d4ff;
+        --coral: #ff5757;
+        --purple: #b388ff;
+        --lime: #06d6a0;
+      }
+      html, body, #root { background: var(--bg); }
+      body {
+        font-family: 'Inter', system-ui, sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+        overflow-x: hidden;
+      }
+      .font-display { font-family: 'Playfair Display', serif; }
+      .font-mono { font-family: 'Space Mono', monospace; }
+
+      @keyframes flash-bg {
+        0%, 24.99%   { background-color: var(--cyan);  color: #0a0b10; }
+        25%, 49.99%  { background-color: var(--amber); color: #0a0b10; }
+        50%, 74.99%  { background-color: var(--coral); color: #0a0b10; }
+        75%, 100%    { background-color: var(--lime);  color: #0a0b10; }
+      }
+      .animate-flash-bg { animation: flash-bg 1.5s infinite; }
+
+      @keyframes scroll {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+      }
+      .animate-scroll-slow { animation: scroll 40s linear infinite; }
+
+      /* Range slider — neon styled */
+      input[type="range"].cs-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 4px;
+        background: #2a2c33;
+        border-radius: 9999px;
+        outline: none;
+      }
+      input[type="range"].cs-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 9999px;
+        background: var(--cyan);
+        border: 2px solid #0a0b10;
+        cursor: pointer;
+        box-shadow: 0 0 0 1px var(--cyan);
+      }
+      input[type="range"].cs-slider::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        border-radius: 9999px;
+        background: var(--cyan);
+        border: 2px solid #0a0b10;
+        cursor: pointer;
+        box-shadow: 0 0 0 1px var(--cyan);
+      }
+      input[type="range"].cs-slider.negative::-webkit-slider-thumb {
+        background: var(--coral);
+        box-shadow: 0 0 0 1px var(--coral);
+      }
+      input[type="range"].cs-slider.negative::-moz-range-thumb {
+        background: var(--coral);
+        box-shadow: 0 0 0 1px var(--coral);
+      }
+
+      /* Custom checkbox */
+      .cs-check {
+        width: 14px;
+        height: 14px;
+        border: 1px solid var(--muted);
+        border-radius: 3px;
+        appearance: none;
+        -webkit-appearance: none;
+        cursor: pointer;
+        position: relative;
+        background: transparent;
+        flex-shrink: 0;
+      }
+      .cs-check:checked {
+        background: var(--cyan);
+        border-color: var(--cyan);
+      }
+      .cs-check:checked::after {
+        content: "";
+        position: absolute;
+        left: 3px;
+        top: 0px;
+        width: 4px;
+        height: 8px;
+        border: solid #0a0b10;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+      }
+
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+  </head>
+  <body class="selection:bg-purple-500/30 selection:text-purple-200">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
