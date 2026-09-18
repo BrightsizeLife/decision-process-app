@@ -53,9 +53,17 @@ export function betaDraws(alpha: number, beta: number, n = N_DRAWS): Float64Arra
   return out;
 }
 
-// v ∈ [0,1]: 0 -> alpha=1, beta=20 (low); 1 -> alpha=20, beta=1 (high)
-export function mapImportanceToAB(v: number): { alpha: number; beta: number } {
-  return { alpha: 1 + 19 * v, beta: 20 - 19 * v };
+// Base concentration (alpha + beta) before the uncertainty scale is applied.
+const BASE_CONCENTRATION = 21;
+
+// v ∈ [0,1]: mean/concentration parameterization, so the resulting Beta's
+// mean is always exactly v. (The previous `alpha = 1+19v, beta = 20-19v`
+// mapping only hit the right mean at v=0.5 — everywhere else alpha+beta
+// summed to a constant 21 but the +1/+1 floor shrank the mean toward 0.5,
+// e.g. v=0.79 rendered as a mean of ~0.76, v=1.0 as ~0.95.)
+export function mapLocationToAB(v: number): { alpha: number; beta: number } {
+  const mean = Math.min(0.999, Math.max(0.001, v));
+  return { alpha: mean * BASE_CONCENTRATION, beta: (1 - mean) * BASE_CONCENTRATION };
 }
 
 // v ∈ [0,1]: 0 -> very tight (high concentration), 1 -> very loose. Log-interp.
@@ -67,9 +75,28 @@ export function mapUncertaintyScale(v: number): number {
 
 // Build (alpha, beta) for a (location, uncertainty) pair.
 export function paramsFor(location: number, uncertainty: number) {
-  const ab = mapImportanceToAB(location);
+  const ab = mapLocationToAB(location);
   const scale = mapUncertaintyScale(uncertainty);
   return { alpha: ab.alpha * scale, beta: ab.beta * scale };
+}
+
+export function normalDraws(meanValue: number, sd: number, n = N_DRAWS): Float64Array {
+  const out = new Float64Array(n);
+  for (let i = 0; i < n; i++) out[i] = meanValue + sd * rnorm();
+  return out;
+}
+
+// USD aspects have no natural [0,1] bound, so uncertainty is expressed as a
+// fraction of the entered amount (log-interpolated tight -> loose) rather
+// than as a Beta concentration. A dollar floor keeps a $0 mean from
+// collapsing to a zero-width spread.
+const USD_SPREAD_FLOOR = 50;
+
+export function mapUsdUncertaintyToSd(uncertainty: number, meanValue: number): number {
+  const tightFrac = 0.05;
+  const looseFrac = 1.5;
+  const frac = Math.exp(Math.log(tightFrac) + (Math.log(looseFrac) - Math.log(tightFrac)) * uncertainty);
+  return frac * Math.max(Math.abs(meanValue), USD_SPREAD_FLOOR);
 }
 
 // ---------- summary stats ----------
@@ -93,6 +120,10 @@ export function quantile(arr: ArrayLike<number>, q: number): number {
 
 export function width90(arr: ArrayLike<number>): number {
   return quantile(arr, 0.95) - quantile(arr, 0.05);
+}
+
+export function interval90(arr: ArrayLike<number>): [number, number] {
+  return [quantile(arr, 0.05), quantile(arr, 0.95)];
 }
 
 // Probability that arrA[i] > arrB[i].

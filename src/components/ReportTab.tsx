@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import type { AspectDraws } from '../types';
 import { COLORS } from '../lib/colors';
+import { formatUnitValue } from '../lib/format';
 import {
   diffArray,
   mean,
@@ -22,33 +23,14 @@ interface ReportTabProps {
 const fmtPct = (p: number) => `${(p * 100).toFixed(1)}%`;
 const fmt3 = (n: number) => n.toFixed(3);
 
-const StatCard: React.FC<{ title: React.ReactNode; value: string; subtitle?: string; color?: string }> = ({
-  title,
-  value,
-  subtitle,
-  color = COLORS.text,
-}) => (
-  <div className="border rounded-2xl p-5" style={{ borderColor: COLORS.dim, background: '#0e1018' }}>
-    <div className="text-[10px] font-mono uppercase tracking-widest text-[#8a8680] mb-1">{title}</div>
-    <div className="font-display text-3xl tabular-nums" style={{ color }}>
-      {value}
-    </div>
-    {subtitle && (
-      <div className="text-xs font-mono text-[#8a8680] mt-1">{subtitle}</div>
-    )}
-  </div>
-);
-
 export const ReportTab: React.FC<ReportTabProps> = ({ aspectDraws, choiceA, choiceB }) => {
   const included = useMemo(() => aspectDraws.filter((a) => a.include), [aspectDraws]);
 
   if (included.length === 0) {
     return (
-      <div className="border-2 border-dashed rounded-2xl p-10 text-center" style={{ borderColor: COLORS.dim }}>
-        <div className="text-[#8a8680] font-mono uppercase tracking-widest text-xs">No aspects included</div>
-        <div className="font-display text-2xl text-[#f0ede6] mt-3">
-          Toggle at least one aspect on to see the analysis.
-        </div>
+      <div className="pact-notice" role="note">
+        <p className="pact-h3 mb-1">no aspects included</p>
+        <p className="pact-muted">Toggle at least one aspect on to see the analysis.</p>
       </div>
     );
   }
@@ -88,6 +70,7 @@ export const ReportTab: React.FC<ReportTabProps> = ({ aspectDraws, choiceA, choi
         const diff = diffArray(sA, sB);
         return {
           name: a.name,
+          unit: a.presenceUnit,
           meanA: mean(sA),
           meanB: mean(sB),
           diff: mean(diff),
@@ -113,7 +96,8 @@ export const ReportTab: React.FC<ReportTabProps> = ({ aspectDraws, choiceA, choi
         diff: meanD,
         width: widthD,
         strong: pAgtB > 0.9,
-        color: COLORS.lime,
+        color: COLORS.practicesInk,
+        dimension: 'practices',
       };
     }
     if (pBgtA > 0.75) {
@@ -124,7 +108,8 @@ export const ReportTab: React.FC<ReportTabProps> = ({ aspectDraws, choiceA, choi
         diff: -meanD,
         width: widthD,
         strong: pBgtA > 0.9,
-        color: COLORS.cyan,
+        color: COLORS.outcomesInk,
+        dimension: 'outcomes',
       };
     }
     return {
@@ -132,7 +117,6 @@ export const ReportTab: React.FC<ReportTabProps> = ({ aspectDraws, choiceA, choi
       pWithin,
       meanD,
       width: widthD,
-      color: COLORS.amber,
     };
   }, [stats, choiceA, choiceB]);
 
@@ -142,182 +126,235 @@ export const ReportTab: React.FC<ReportTabProps> = ({ aspectDraws, choiceA, choi
   }, [aspectStats]);
 
   const overallSeries: Series[] = [
-    { label: choiceA, data: stats.A, color: COLORS.cyan },
-    { label: choiceB, data: stats.B, color: COLORS.coral },
+    { label: choiceA, data: stats.A, color: COLORS.practices },
+    { label: choiceB, data: stats.B, color: COLORS.outcomes },
   ];
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-16">
       {/* Decision summary */}
-      <div
-        className="border-2 rounded-2xl p-6 md:p-8"
-        style={{ borderColor: decision.color, background: `${decision.color}10` }}
-      >
-        <div
-          className="text-xs font-mono uppercase tracking-widest mb-3"
-          style={{ color: decision.color }}
-        >
-          ★ Decision Recommendation
-        </div>
-        {decision.kind === 'winner' ? (
-          <>
-            <h2 className="font-display text-3xl md:text-5xl text-[#f0ede6] leading-tight">
-              <span style={{ color: decision.color }}>{decision.winner}</span>{' '}
-              <span className="italic text-[#8a8680]">is {decision.strong ? 'strongly' : 'likely'}</span> the better choice.
-            </h2>
-            <p className="mt-4 text-[#f0ede6] text-base md:text-lg">
-              <span className="font-mono uppercase tracking-widest text-xs text-[#8a8680]">Probability</span>{' '}
-              <span className="tabular-nums" style={{ color: decision.color }}>{fmtPct(decision.prob)}</span>{' '}
-              <span className="text-[#44413b]">|</span>{' '}
-              <span className="font-mono uppercase tracking-widest text-xs text-[#8a8680]">Mean advantage</span>{' '}
-              <span className="tabular-nums">{fmt3(Math.abs(decision.diff))}</span>{' '}
-              <span className="text-[#44413b]">|</span>{' '}
-              <span className="font-mono uppercase tracking-widest text-xs text-[#8a8680]">90% width</span>{' '}
-              <span className="tabular-nums">{fmt3(decision.width)}</span>
-            </p>
-            {topDrivers.length > 0 && (
-              <p className="mt-3 text-sm text-[#8a8680] font-mono uppercase tracking-widest">
-                Biggest drivers · <span style={{ color: COLORS.amber }}>{topDrivers.join(' + ')}</span>
+      <section aria-labelledby="decision-h">
+        <h2 id="decision-h" className="cs-kicker">
+          decision recommendation
+        </h2>
+        <div style={{ borderTop: '3px solid var(--pact-ink)', paddingTop: 'var(--pact-space-2)' }}>
+          {decision.kind === 'winner' ? (
+            <>
+              <h3 className="pact-h2">
+                <span data-dimension={decision.dimension} className="pact-dim-mark" aria-hidden="true" />
+                <span style={{ color: decision.color }}>{decision.winner}</span> is{' '}
+                {decision.strong ? 'strongly' : 'likely'} the better choice.
+              </h3>
+              <p className="mt-3">
+                <span className="pact-muted">probability</span>{' '}
+                <span className="pact-num" style={{ color: decision.color }}>
+                  {fmtPct(decision.prob)}
+                </span>
+                <span className="pact-muted"> · mean advantage </span>
+                <span className="pact-num">{fmt3(Math.abs(decision.diff))}</span>
+                <span className="pact-muted"> · 90% width </span>
+                <span className="pact-num">{fmt3(decision.width)}</span>
               </p>
-            )}
-          </>
-        ) : (
-          <>
-            <h2 className="font-display text-3xl md:text-5xl text-[#f0ede6] leading-tight">
-              <span style={{ color: decision.color }}>Too close to call.</span>
-            </h2>
-            <p className="mt-4 text-[#f0ede6] text-base md:text-lg">
-              <span style={{ color: COLORS.text }}>{choiceA}</span> and <span style={{ color: COLORS.text }}>{choiceB}</span> land within 5% of each other{' '}
-              <span className="tabular-nums" style={{ color: decision.color }}>{fmtPct(decision.pWithin)}</span>{' '}
-              of the time. Mean difference is just <span className="tabular-nums">{fmt3(Math.abs(decision.meanD))}</span> (90% width <span className="tabular-nums">{fmt3(decision.width)}</span>).
-            </p>
-            <p className="mt-3 text-sm text-[#8a8680] italic">
-              Consider whether other aspects you haven't modeled might tip the balance.
-            </p>
-          </>
-        )}
-      </div>
+              {topDrivers.length > 0 && (
+                <p className="mt-2 pact-small pact-muted">
+                  biggest drivers · <strong className="text-[var(--pact-ink)]">{topDrivers.join(' + ')}</strong>
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <h3 className="pact-h2">too close to call.</h3>
+              <p className="mt-3">
+                {choiceA} and {choiceB} land within 5% of each other{' '}
+                <span className="pact-num">{fmtPct(decision.pWithin)}</span> of the time. Mean
+                difference is just <span className="pact-num">{fmt3(Math.abs(decision.meanD))}</span>{' '}
+                (90% width <span className="pact-num">{fmt3(decision.width)}</span>).
+              </p>
+              <p className="mt-2 pact-small pact-muted">
+                Consider whether other aspects you haven't modeled might tip the balance.
+              </p>
+            </>
+          )}
+        </div>
+      </section>
 
       {/* Top stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
-        <StatCard title={`Mean ${choiceA}`} value={fmt3(stats.meanA)} color={COLORS.cyan} />
-        <StatCard title={`Mean ${choiceB}`} value={fmt3(stats.meanB)} color={COLORS.coral} />
-        <StatCard
-          title="Mean Difference"
-          value={fmt3(stats.meanD)}
-          subtitle={`90% width ${fmt3(stats.widthD)}`}
-          color={COLORS.purple}
-        />
-        <StatCard title={`P(${choiceA} > ${choiceB})`} value={fmtPct(stats.pAgtB)} color={COLORS.cyan} />
-        <StatCard title={`P(${choiceB} > ${choiceA})`} value={fmtPct(stats.pBgtA)} color={COLORS.coral} />
-        <StatCard title="P(within 5%)" value={fmtPct(stats.pWithin)} color={COLORS.amber} />
-      </div>
+      <section aria-labelledby="numbers-h">
+        <h2 id="numbers-h" className="cs-kicker">
+          the numbers
+        </h2>
+        <dl className="pact-stats">
+          <div className="pact-stat">
+            <dt className="cs-kicker">mean {choiceA}</dt>
+            <dd className="pact-num-big" style={{ color: COLORS.practicesInk, fontSize: '1.75rem' }}>
+              {fmt3(stats.meanA)}
+            </dd>
+          </div>
+          <div className="pact-stat">
+            <dt className="cs-kicker">mean {choiceB}</dt>
+            <dd className="pact-num-big" style={{ color: COLORS.outcomesInk, fontSize: '1.75rem' }}>
+              {fmt3(stats.meanB)}
+            </dd>
+          </div>
+          <div className="pact-stat">
+            <dt className="cs-kicker">mean difference</dt>
+            <dd className="pact-num-big" style={{ fontSize: '1.75rem' }}>
+              {fmt3(stats.meanD)}
+            </dd>
+            <div className="pact-small pact-muted">90% width {fmt3(stats.widthD)}</div>
+          </div>
+          <div className="pact-stat">
+            <dt className="cs-kicker">
+              p({choiceA} &gt; {choiceB})
+            </dt>
+            <dd className="pact-num-big" style={{ fontSize: '1.75rem' }}>
+              {fmtPct(stats.pAgtB)}
+            </dd>
+          </div>
+          <div className="pact-stat">
+            <dt className="cs-kicker">
+              p({choiceB} &gt; {choiceA})
+            </dt>
+            <dd className="pact-num-big" style={{ fontSize: '1.75rem' }}>
+              {fmtPct(stats.pBgtA)}
+            </dd>
+          </div>
+          <div className="pact-stat">
+            <dt className="cs-kicker">p(within 5%)</dt>
+            <dd className="pact-num-big" style={{ fontSize: '1.75rem' }}>
+              {fmtPct(stats.pWithin)}
+            </dd>
+          </div>
+        </dl>
+      </section>
 
       {/* Distributions plot */}
-      <div className="border rounded-2xl p-5 md:p-6" style={{ borderColor: COLORS.dim, background: '#0e1018' }}>
-        <div className="text-xs font-mono uppercase tracking-widest text-[#8a8680] mb-3">Score Distributions</div>
+      <section aria-labelledby="dist-h">
+        <h2 id="dist-h" className="pact-h2">
+          score distributions
+        </h2>
         <DensityPlot series={overallSeries} width={760} height={260} xLabel="normalized score" />
-      </div>
+      </section>
 
-      <div className="border rounded-2xl p-5 md:p-6" style={{ borderColor: COLORS.dim, background: '#0e1018' }}>
-        <div className="text-xs font-mono uppercase tracking-widest text-[#8a8680] mb-3">
-          Difference distribution ({choiceA} − {choiceB})
-        </div>
+      <section aria-labelledby="diff-h">
+        <h2 id="diff-h" className="pact-h2">
+          difference ({choiceA} − {choiceB})
+        </h2>
         <DensityPlot
-          series={[{ label: 'Δ', data: stats.D, color: COLORS.purple }]}
+          series={[{ label: 'Δ', data: stats.D, color: COLORS.architecture }]}
           width={760}
           height={260}
           showLegend={false}
           xLabel={`${choiceA} − ${choiceB}`}
           zeroLine
-          zeroLineColor={COLORS.coral}
+          zeroLineColor={COLORS.signal}
         />
-      </div>
+      </section>
 
       {/* Threshold table */}
-      <div className="border rounded-2xl p-5 md:p-6" style={{ borderColor: COLORS.dim, background: '#0e1018' }}>
-        <div className="text-xs font-mono uppercase tracking-widest text-[#8a8680] mb-1">Advantage Thresholds</div>
-        <p className="text-sm text-[#8a8680] mb-4">
-          Probability that one choice beats the other by at least the given margin.
-        </p>
-        <table className="w-full text-sm font-mono">
-          <thead>
-            <tr className="text-[10px] uppercase tracking-widest text-[#8a8680] border-b" style={{ borderColor: COLORS.dim }}>
-              <th className="text-left py-2 px-2">Margin</th>
-              <th className="text-right py-2 px-2" style={{ color: COLORS.cyan }}>{choiceA} ahead</th>
-              <th className="text-right py-2 px-2" style={{ color: COLORS.coral }}>{choiceB} ahead</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stats.thresholdRows.map((row) => (
-              <tr key={row.margin} className="border-b" style={{ borderColor: '#1a1c25' }}>
-                <td className="py-3 px-2 text-[#f0ede6]">{row.margin}</td>
-                <td className="py-3 px-2 text-right tabular-nums" style={{ color: COLORS.cyan }}>{fmtPct(row.pA)}</td>
-                <td className="py-3 px-2 text-right tabular-nums" style={{ color: COLORS.coral }}>{fmtPct(row.pB)}</td>
+      <section aria-labelledby="threshold-h">
+        <h2 id="threshold-h" className="pact-h2">
+          advantage thresholds
+        </h2>
+        <p className="pact-muted mb-3">Probability that one choice beats the other by at least the given margin.</p>
+        <div className="pact-table-wrap" tabIndex={0} aria-label="advantage thresholds by margin">
+          <table className="pact-table">
+            <thead>
+              <tr>
+                <th scope="col">margin</th>
+                <th scope="col" className="pact-num">
+                  {choiceA} ahead
+                </th>
+                <th scope="col" className="pact-num">
+                  {choiceB} ahead
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {stats.thresholdRows.map((row) => (
+                <tr key={row.margin}>
+                  <td>{row.margin}</td>
+                  <td className="pact-num">{fmtPct(row.pA)}</td>
+                  <td className="pact-num">{fmtPct(row.pB)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
       {/* Summary statistics */}
-      <div className="border rounded-2xl p-5 md:p-6" style={{ borderColor: COLORS.dim, background: '#0e1018' }}>
-        <div className="text-xs font-mono uppercase tracking-widest text-[#8a8680] mb-3">Summary Statistics</div>
-        <table className="w-full text-sm font-mono">
-          <thead>
-            <tr className="text-[10px] uppercase tracking-widest text-[#8a8680] border-b" style={{ borderColor: COLORS.dim }}>
-              <th className="text-left py-2 px-2">Choice</th>
-              <th className="text-right py-2 px-2">Mean</th>
-              <th className="text-right py-2 px-2">90% Width</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="border-b" style={{ borderColor: '#1a1c25' }}>
-              <td className="py-3 px-2" style={{ color: COLORS.cyan }}>{choiceA}</td>
-              <td className="py-3 px-2 text-right tabular-nums">{fmt3(stats.meanA)}</td>
-              <td className="py-3 px-2 text-right tabular-nums">{fmt3(stats.widthA)}</td>
-            </tr>
-            <tr className="border-b" style={{ borderColor: '#1a1c25' }}>
-              <td className="py-3 px-2" style={{ color: COLORS.coral }}>{choiceB}</td>
-              <td className="py-3 px-2 text-right tabular-nums">{fmt3(stats.meanB)}</td>
-              <td className="py-3 px-2 text-right tabular-nums">{fmt3(stats.widthB)}</td>
-            </tr>
-            <tr>
-              <td className="py-3 px-2" style={{ color: COLORS.purple }}>Difference ({choiceA} − {choiceB})</td>
-              <td className="py-3 px-2 text-right tabular-nums">{fmt3(stats.meanD)}</td>
-              <td className="py-3 px-2 text-right tabular-nums">{fmt3(stats.widthD)}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <section aria-labelledby="summary-h">
+        <h2 id="summary-h" className="pact-h2">
+          summary statistics
+        </h2>
+        <div className="pact-table-wrap" tabIndex={0} aria-label="summary statistics by choice">
+          <table className="pact-table">
+            <thead>
+              <tr>
+                <th scope="col">choice</th>
+                <th scope="col" className="pact-num">
+                  mean
+                </th>
+                <th scope="col" className="pact-num">
+                  90% width
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style={{ color: COLORS.practicesInk }}>{choiceA}</td>
+                <td className="pact-num">{fmt3(stats.meanA)}</td>
+                <td className="pact-num">{fmt3(stats.widthA)}</td>
+              </tr>
+              <tr>
+                <td style={{ color: COLORS.outcomesInk }}>{choiceB}</td>
+                <td className="pact-num">{fmt3(stats.meanB)}</td>
+                <td className="pact-num">{fmt3(stats.widthB)}</td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td>
+                  difference ({choiceA} − {choiceB})
+                </td>
+                <td className="pact-num">{fmt3(stats.meanD)}</td>
+                <td className="pact-num">{fmt3(stats.widthD)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
 
       {/* Per-aspect comparison */}
-      <div className="border rounded-2xl p-5 md:p-6" style={{ borderColor: COLORS.dim, background: '#0e1018' }}>
-        <div className="text-xs font-mono uppercase tracking-widest text-[#8a8680] mb-1">Per-Aspect Comparison</div>
-        <p className="text-sm text-[#8a8680] mb-5">How each aspect leans between the two choices.</p>
-        <div className="space-y-6">
+      <section aria-labelledby="per-aspect-h">
+        <h2 id="per-aspect-h" className="pact-h2">
+          per-aspect comparison
+        </h2>
+        <p className="pact-muted mb-4">How each aspect leans between the two choices.</p>
+        <div className="space-y-8">
           {aspectStats.map((a, i) => (
             <div key={i}>
-              <div className="flex items-baseline justify-between mb-2">
-                <h3 className="font-display text-xl text-[#f0ede6]">
+              <div className="flex items-baseline justify-between gap-3 flex-wrap mb-2">
+                <h3 className="pact-h3 mb-0">
                   {a.name}{' '}
                   {a.negative && (
-                    <span className="text-xs font-mono uppercase tracking-widest" style={{ color: COLORS.coral }}>
-                      [neg]
+                    <span className="pact-small" style={{ color: COLORS.outcomesInk, fontWeight: 700 }}>
+                      [negative valence]
                     </span>
                   )}
                 </h3>
-                <div className="text-xs font-mono text-[#8a8680] tabular-nums">
-                  Δ {fmt3(a.diff)} · P({choiceA}&gt;{choiceB}) {fmtPct(a.pAgtB)}
+                <div className="pact-small pact-num pact-muted">
+                  Δ {formatUnitValue(a.diff, a.unit)} · p({choiceA}&gt;{choiceB}) {fmtPct(a.pAgtB)}
                 </div>
               </div>
               <DensityPlot
                 series={[
-                  { label: choiceA, data: a.drawsA, color: COLORS.cyan },
-                  { label: choiceB, data: a.drawsB, color: COLORS.coral },
+                  { label: choiceA, data: a.drawsA, color: COLORS.practices },
+                  { label: choiceB, data: a.drawsB, color: COLORS.outcomes },
                 ]}
                 width={760}
-                height={150}
+                height={130}
                 showLegend={false}
                 showAxes={false}
               />
@@ -325,33 +362,41 @@ export const ReportTab: React.FC<ReportTabProps> = ({ aspectDraws, choiceA, choi
           ))}
         </div>
 
-        <div className="mt-6 overflow-x-auto">
-          <table className="w-full text-sm font-mono min-w-[600px]">
+        <div className="mt-6 pact-table-wrap" tabIndex={0} aria-label="per-aspect comparison table">
+          <table className="pact-table">
             <thead>
-              <tr className="text-[10px] uppercase tracking-widest text-[#8a8680] border-b" style={{ borderColor: COLORS.dim }}>
-                <th className="text-left py-2 px-2">Aspect</th>
-                <th className="text-right py-2 px-2" style={{ color: COLORS.cyan }}>Mean {choiceA}</th>
-                <th className="text-right py-2 px-2" style={{ color: COLORS.coral }}>Mean {choiceB}</th>
-                <th className="text-right py-2 px-2">Δ</th>
-                <th className="text-right py-2 px-2">P({choiceA}&gt;{choiceB})</th>
+              <tr>
+                <th scope="col">aspect</th>
+                <th scope="col" className="pact-num">
+                  mean {choiceA}
+                </th>
+                <th scope="col" className="pact-num">
+                  mean {choiceB}
+                </th>
+                <th scope="col" className="pact-num">
+                  Δ
+                </th>
+                <th scope="col" className="pact-num">
+                  p({choiceA}&gt;{choiceB})
+                </th>
               </tr>
             </thead>
             <tbody>
               {aspectStats.map((a, i) => (
-                <tr key={i} className="border-b" style={{ borderColor: '#1a1c25' }}>
-                  <td className="py-2 px-2 text-[#f0ede6]">{a.name}</td>
-                  <td className="py-2 px-2 text-right tabular-nums">{fmt3(a.meanA)}</td>
-                  <td className="py-2 px-2 text-right tabular-nums">{fmt3(a.meanB)}</td>
-                  <td className="py-2 px-2 text-right tabular-nums" style={{ color: a.diff >= 0 ? COLORS.cyan : COLORS.coral }}>
-                    {fmt3(a.diff)}
+                <tr key={i}>
+                  <td>{a.name}</td>
+                  <td className="pact-num">{formatUnitValue(a.meanA, a.unit)}</td>
+                  <td className="pact-num">{formatUnitValue(a.meanB, a.unit)}</td>
+                  <td className="pact-num" style={{ color: a.diff >= 0 ? COLORS.practicesInk : COLORS.outcomesInk }}>
+                    {formatUnitValue(a.diff, a.unit)}
                   </td>
-                  <td className="py-2 px-2 text-right tabular-nums">{fmtPct(a.pAgtB)}</td>
+                  <td className="pact-num">{fmtPct(a.pAgtB)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </div>
   );
 };

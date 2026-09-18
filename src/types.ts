@@ -1,8 +1,11 @@
+export type PresenceUnit = 'probability' | 'usd';
+
 export interface AspectInputs {
   id: string;
   name: string;
   importance: number;
   importanceUncertainty: number;
+  presenceUnit: PresenceUnit;
   presenceA: number;
   uncertaintyA: number;
   presenceB: number;
@@ -14,6 +17,7 @@ export interface AspectInputs {
 export interface AspectDraws {
   id: string;
   name: string;
+  presenceUnit: PresenceUnit;
   importance: Float64Array;
   presenceA: Float64Array;
   presenceB: Float64Array;
