@@ -90,7 +90,6 @@ input.pact-dial-value:focus {
   color: var(--pact-muted);
   margin-top: 2px;
 }
-.pact-dial-disabled { opacity: 0.4; pointer-events: none; }
 
 /* ── Checkbox (Include / Negative valence) ── */
 .pact-checkbox {
@@ -125,33 +124,96 @@ input.pact-dial-value:focus {
   outline-offset: var(--pact-focus-offset);
 }
 
-/* ── Unit toggle (probability / usd radio pair) ── */
-.pact-unit-toggle {
+/* ── Segmented control (model selector, kind and direction toggles) ──
+   Real buttons with aria-pressed; the pressed one is the one indigo. */
+.pact-segmented {
   display: inline-flex;
+  flex-wrap: nowrap;
+  max-width: 100%;
   border: 2px solid var(--pact-ink);
   border-radius: 4px;
   overflow: hidden;
 }
-.pact-unit-toggle button {
+.pact-segmented button {
+  flex: 1 1 auto;
   font-family: var(--pact-font-ui);
   font-size: var(--pact-text-sm);
   font-weight: 700;
-  text-transform: lowercase;
-  padding: 4px 10px;
+  line-height: 1.2;
+  text-align: center;
+  padding: 6px 10px;
   min-height: 32px;
   background: var(--pact-bg);
   color: var(--pact-ink);
   border: none;
   cursor: pointer;
 }
-.pact-unit-toggle button + button { border-left: 2px solid var(--pact-ink); }
-.pact-unit-toggle button[aria-pressed="true"] {
+.pact-segmented button + button { border-left: 2px solid var(--pact-ink); }
+.pact-segmented button[aria-pressed="true"] {
   background: var(--pact-primary);
   color: var(--pact-primary-ink);
 }
-.pact-unit-toggle button:focus-visible {
+.pact-segmented button:focus-visible {
   outline: var(--pact-focus-ring);
   outline-offset: -2px;
+}
+/* The large one is the model selector: three equal segments that never
+   wrap, even at 320px, so it always reads as one control. */
+.pact-segmented[data-size="lg"] {
+  display: flex;
+  width: 100%;
+  max-width: 32rem;
+}
+.pact-segmented[data-size="lg"] button {
+  flex: 1 1 0;
+  font-size: 0.95rem;
+  min-height: 48px;
+  padding: 0 var(--pact-space-1);
+}
+
+/* ── Interval input: best estimate + 90% judgment interval ── */
+.pact-interval {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--pact-space-1);
+}
+.pact-interval-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.pact-interval-caption {
+  font-size: 0.75rem;
+  color: var(--pact-muted);
+}
+.pact-interval .pact-dial-value {
+  width: 100%;
+  text-align: left;
+}
+
+.pact-anchor {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pact-anchor .pact-aspect-name {
+  font-weight: 400;
+  font-size: 0.95rem;
+}
+
+/* ── Compare: three independent columns, no combined result ── */
+.pact-compare {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--pact-space-4);
+}
+@media (min-width: 48rem) {
+  .pact-compare { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.pact-compare-col {
+  border-top: 3px solid var(--pact-ink);
+  padding-top: var(--pact-space-2);
 }
 
 /* ── Aspect card ── */
@@ -171,7 +233,7 @@ input.pact-dial-value:focus {
   font-size: 1.05rem;
   color: var(--pact-ink);
   padding: 2px 2px;
-  min-width: 8rem;
+  min-width: 0;
 }
 .pact-aspect-name:focus {
   outline: none;

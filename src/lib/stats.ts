@@ -80,23 +80,27 @@ export function paramsFor(location: number, uncertainty: number) {
   return { alpha: ab.alpha * scale, beta: ab.beta * scale };
 }
 
-export function normalDraws(meanValue: number, sd: number, n = N_DRAWS): Float64Array {
+// Z for the 95th percentile of a standard normal.
+const Z95 = 1.6448536269514722;
+
+// Draws from a best estimate (median) plus a 90% judgment interval. Each
+// side of the median is a half-normal scaled so the 5th and 95th percentiles
+// land exactly on lo and hi, so the interval need not be symmetric.
+export function intervalDraws(
+  iv: { mid: number; lo: number; hi: number },
+  n = N_DRAWS,
+  opts: { min?: number } = {}
+): Float64Array {
+  const sLow = Math.max(0, iv.mid - iv.lo) / Z95;
+  const sHigh = Math.max(0, iv.hi - iv.mid) / Z95;
   const out = new Float64Array(n);
-  for (let i = 0; i < n; i++) out[i] = meanValue + sd * rnorm();
+  for (let i = 0; i < n; i++) {
+    const z = rnorm();
+    let v = iv.mid + z * (z < 0 ? sLow : sHigh);
+    if (opts.min !== undefined && v < opts.min) v = opts.min;
+    out[i] = v;
+  }
   return out;
-}
-
-// USD aspects have no natural [0,1] bound, so uncertainty is expressed as a
-// fraction of the entered amount (log-interpolated tight -> loose) rather
-// than as a Beta concentration. A dollar floor keeps a $0 mean from
-// collapsing to a zero-width spread.
-const USD_SPREAD_FLOOR = 50;
-
-export function mapUsdUncertaintyToSd(uncertainty: number, meanValue: number): number {
-  const tightFrac = 0.05;
-  const looseFrac = 1.5;
-  const frac = Math.exp(Math.log(tightFrac) + (Math.log(looseFrac) - Math.log(tightFrac)) * uncertainty);
-  return frac * Math.max(Math.abs(meanValue), USD_SPREAD_FLOOR);
 }
 
 // ---------- summary stats ----------
@@ -130,28 +134,6 @@ export function interval90(arr: ArrayLike<number>): [number, number] {
 export function probGreater(a: ArrayLike<number>, b: ArrayLike<number>): number {
   let c = 0;
   for (let i = 0; i < a.length; i++) if (a[i] > b[i]) c++;
-  return c / a.length;
-}
-
-// Probability that ratio A/B is within ±5%.
-export function probWithin(a: ArrayLike<number>, b: ArrayLike<number>, tol = 0.05): number {
-  let c = 0;
-  for (let i = 0; i < a.length; i++) {
-    const denom = Math.max(b[i], 1e-6);
-    const r = a[i] / denom;
-    if (r >= 1 - tol && r <= 1 + tol) c++;
-  }
-  return c / a.length;
-}
-
-// Probability that a >= (1+tau) * b.
-export function probAdvantage(
-  a: ArrayLike<number>,
-  b: ArrayLike<number>,
-  tau: number
-): number {
-  let c = 0;
-  for (let i = 0; i < a.length; i++) if (a[i] >= (1 + tau) * b[i]) c++;
   return c / a.length;
 }
 
@@ -208,42 +190,6 @@ export function kde(
     out[g] = { x, y: sum / (n * bw) };
   }
   return out;
-}
-
-// Element-wise sum of arrays.
-export function sumArrays(arrays: Float64Array[]): Float64Array {
-  if (arrays.length === 0) return new Float64Array(0);
-  const n = arrays[0].length;
-  const out = new Float64Array(n);
-  for (const arr of arrays) {
-    for (let i = 0; i < n; i++) out[i] += arr[i];
-  }
-  return out;
-}
-
-// Min/max scaler shared across A and B.
-export function normalizePair(a: Float64Array, b: Float64Array): { A: Float64Array; B: Float64Array } {
-  let mn = Infinity;
-  let mx = -Infinity;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] < mn) mn = a[i];
-    if (a[i] > mx) mx = a[i];
-    if (b[i] < mn) mn = b[i];
-    if (b[i] > mx) mx = b[i];
-  }
-  const range = mx - mn;
-  const A = new Float64Array(a.length);
-  const B = new Float64Array(b.length);
-  if (range < 1e-10) {
-    A.fill(0.5);
-    B.fill(0.5);
-    return { A, B };
-  }
-  for (let i = 0; i < a.length; i++) {
-    A[i] = (a[i] - mn) / range;
-    B[i] = (b[i] - mn) / range;
-  }
-  return { A, B };
 }
 
 export function diffArray(a: Float64Array, b: Float64Array): Float64Array {

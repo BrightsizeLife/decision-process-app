@@ -20,6 +20,7 @@ interface DensityPlotProps {
   zeroLineColor?: string;
   fillOpacity?: number;
   tickFormat?: (n: number) => string;
+  zeroLabel?: string;
 }
 
 export const DensityPlot: React.FC<DensityPlotProps> = ({
@@ -34,6 +35,7 @@ export const DensityPlot: React.FC<DensityPlotProps> = ({
   zeroLineColor = '#c52012',
   fillOpacity = 0.35,
   tickFormat = (n) => n.toFixed(2),
+  zeroLabel = 'no diff',
 }) => {
   const margin = { top: 14, right: 14, bottom: showAxes ? 32 : 8, left: 8 };
   const innerW = width - margin.left - margin.right;
@@ -52,6 +54,11 @@ export const DensityPlot: React.FC<DensityPlotProps> = ({
           if (s.data[i] > hi) hi = s.data[i];
         }
       }
+      // A zero line is only useful if zero is on the axis.
+      if (zeroLine) {
+        lo = Math.min(lo, 0);
+        hi = Math.max(hi, 0);
+      }
       const pad = (hi - lo) * 0.05 || 0.05;
       lo -= pad;
       hi += pad;
@@ -66,7 +73,7 @@ export const DensityPlot: React.FC<DensityPlotProps> = ({
     let maxY = 0;
     for (const d of densities) for (const p of d.pts) if (p.y > maxY) maxY = p.y;
     return { lo, hi, densities, maxY };
-  }, [series, domain]);
+  }, [series, domain, zeroLine]);
 
   const xScale = d3.scaleLinear().domain([computed.lo, computed.hi]).range([0, innerW]);
   const yScale = d3.scaleLinear().domain([0, computed.maxY * 1.05 || 1]).range([innerH, 0]);
@@ -122,14 +129,15 @@ export const DensityPlot: React.FC<DensityPlotProps> = ({
                 strokeDasharray="4 4"
               />
               <text
-                x={xScale(0) + 6}
+                x={xScale(0) + (xScale(0) > innerW - 90 ? -6 : 6)}
                 y={12}
+                textAnchor={xScale(0) > innerW - 90 ? 'end' : 'start'}
                 fill={zeroLineColor}
                 fontSize={10}
                 fontFamily="var(--pact-font-num)"
                 style={{ textTransform: 'lowercase', letterSpacing: '0.05em', fontWeight: 700 }}
               >
-                no diff
+                {zeroLabel}
               </text>
             </>
           )}

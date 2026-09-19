@@ -35,21 +35,6 @@ export const COLORS = {
   limeInk: '#007249',
 } as const;
 
-export const ACCENT_CYCLE = [
-  COLORS.practices,
-  COLORS.culture,
-  COLORS.architecture,
-  COLORS.outcomes,
-  COLORS.technology,
-];
+const DIMENSION_CYCLE = ['practices', 'culture', 'architecture', 'outcomes', 'technology'];
 
-export const ACCENT_INK_CYCLE = [
-  COLORS.practicesInk,
-  COLORS.cultureInk,
-  COLORS.architectureInk,
-  COLORS.outcomesInk,
-  COLORS.technologyInk,
-];
-
-export const accentFor = (idx: number) => ACCENT_CYCLE[idx % ACCENT_CYCLE.length];
-export const accentInkFor = (idx: number) => ACCENT_INK_CYCLE[idx % ACCENT_INK_CYCLE.length];
+export const dimensionFor = (idx: number) => DIMENSION_CYCLE[idx % DIMENSION_CYCLE.length];
