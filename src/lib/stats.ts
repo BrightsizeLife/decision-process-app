@@ -53,9 +53,17 @@ export function betaDraws(alpha: number, beta: number, n = N_DRAWS): Float64Arra
   return out;
 }
 
-// v ∈ [0,1]: 0 -> alpha=1, beta=20 (low); 1 -> alpha=20, beta=1 (high)
-export function mapImportanceToAB(v: number): { alpha: number; beta: number } {
-  return { alpha: 1 + 19 * v, beta: 20 - 19 * v };
+// Base concentration (alpha + beta) before the uncertainty scale is applied.
+const BASE_CONCENTRATION = 21;
+
+// v ∈ [0,1]: mean/concentration parameterization, so the resulting Beta's
+// mean is always exactly v. (The previous `alpha = 1+19v, beta = 20-19v`
+// mapping only hit the right mean at v=0.5 — everywhere else alpha+beta
+// summed to a constant 21 but the +1/+1 floor shrank the mean toward 0.5,
+// e.g. v=0.79 rendered as a mean of ~0.76, v=1.0 as ~0.95.)
+export function mapLocationToAB(v: number): { alpha: number; beta: number } {
+  const mean = Math.min(0.999, Math.max(0.001, v));
+  return { alpha: mean * BASE_CONCENTRATION, beta: (1 - mean) * BASE_CONCENTRATION };
 }
 
 // v ∈ [0,1]: 0 -> very tight (high concentration), 1 -> very loose. Log-interp.
@@ -67,9 +75,32 @@ export function mapUncertaintyScale(v: number): number {
 
 // Build (alpha, beta) for a (location, uncertainty) pair.
 export function paramsFor(location: number, uncertainty: number) {
-  const ab = mapImportanceToAB(location);
+  const ab = mapLocationToAB(location);
   const scale = mapUncertaintyScale(uncertainty);
   return { alpha: ab.alpha * scale, beta: ab.beta * scale };
+}
+
+// Z for the 95th percentile of a standard normal.
+const Z95 = 1.6448536269514722;
+
+// Draws from a best estimate (median) plus a 90% judgment interval. Each
+// side of the median is a half-normal scaled so the 5th and 95th percentiles
+// land exactly on lo and hi, so the interval need not be symmetric.
+export function intervalDraws(
+  iv: { mid: number; lo: number; hi: number },
+  n = N_DRAWS,
+  opts: { min?: number } = {}
+): Float64Array {
+  const sLow = Math.max(0, iv.mid - iv.lo) / Z95;
+  const sHigh = Math.max(0, iv.hi - iv.mid) / Z95;
+  const out = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    const z = rnorm();
+    let v = iv.mid + z * (z < 0 ? sLow : sHigh);
+    if (opts.min !== undefined && v < opts.min) v = opts.min;
+    out[i] = v;
+  }
+  return out;
 }
 
 // ---------- summary stats ----------
@@ -95,32 +126,14 @@ export function width90(arr: ArrayLike<number>): number {
   return quantile(arr, 0.95) - quantile(arr, 0.05);
 }
 
+export function interval90(arr: ArrayLike<number>): [number, number] {
+  return [quantile(arr, 0.05), quantile(arr, 0.95)];
+}
+
 // Probability that arrA[i] > arrB[i].
 export function probGreater(a: ArrayLike<number>, b: ArrayLike<number>): number {
   let c = 0;
   for (let i = 0; i < a.length; i++) if (a[i] > b[i]) c++;
-  return c / a.length;
-}
-
-// Probability that ratio A/B is within ±5%.
-export function probWithin(a: ArrayLike<number>, b: ArrayLike<number>, tol = 0.05): number {
-  let c = 0;
-  for (let i = 0; i < a.length; i++) {
-    const denom = Math.max(b[i], 1e-6);
-    const r = a[i] / denom;
-    if (r >= 1 - tol && r <= 1 + tol) c++;
-  }
-  return c / a.length;
-}
-
-// Probability that a >= (1+tau) * b.
-export function probAdvantage(
-  a: ArrayLike<number>,
-  b: ArrayLike<number>,
-  tau: number
-): number {
-  let c = 0;
-  for (let i = 0; i < a.length; i++) if (a[i] >= (1 + tau) * b[i]) c++;
   return c / a.length;
 }
 
@@ -177,42 +190,6 @@ export function kde(
     out[g] = { x, y: sum / (n * bw) };
   }
   return out;
-}
-
-// Element-wise sum of arrays.
-export function sumArrays(arrays: Float64Array[]): Float64Array {
-  if (arrays.length === 0) return new Float64Array(0);
-  const n = arrays[0].length;
-  const out = new Float64Array(n);
-  for (const arr of arrays) {
-    for (let i = 0; i < n; i++) out[i] += arr[i];
-  }
-  return out;
-}
-
-// Min/max scaler shared across A and B.
-export function normalizePair(a: Float64Array, b: Float64Array): { A: Float64Array; B: Float64Array } {
-  let mn = Infinity;
-  let mx = -Infinity;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] < mn) mn = a[i];
-    if (a[i] > mx) mx = a[i];
-    if (b[i] < mn) mn = b[i];
-    if (b[i] > mx) mx = b[i];
-  }
-  const range = mx - mn;
-  const A = new Float64Array(a.length);
-  const B = new Float64Array(b.length);
-  if (range < 1e-10) {
-    A.fill(0.5);
-    B.fill(0.5);
-    return { A, B };
-  }
-  for (let i = 0; i < a.length; i++) {
-    A[i] = (a[i] - mn) / range;
-    B[i] = (b[i] - mn) / range;
-  }
-  return { A, B };
 }
 
 export function diffArray(a: Float64Array, b: Float64Array): Float64Array {

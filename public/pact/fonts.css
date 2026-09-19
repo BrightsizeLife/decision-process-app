@@ -1,0 +1,37 @@
+/*
+ * The two faces, self-hosted. Link this before tokens.css.
+ *
+ * Both files are the variable cuts, latin subset, straight from Google
+ * Fonts' own build (Archivo v25, Azeret Mono v21), free under the SIL
+ * Open Font License, which permits bundling them here. One file per family
+ * carries every weight the design uses; Archivo's also carries the width
+ * axis that the headings are set on.
+ *
+ * Why self-host at all: a visitor's browser should not have to call a
+ * third party to read a page. Serve these two files from wherever the
+ * page is served, and fix the two paths below if the folder moves.
+ *
+ * tokens.css reads the family names declared here through its fallbacks:
+ * var(--font-archivo, "Archivo") resolves to "Archivo" when nothing sets
+ * --font-archivo, which is the case everywhere except inside the Next.js
+ * site, where next/font sets it instead. Nothing else to wire up.
+ */
+
+@font-face {
+  font-family: "Archivo";
+  font-style: normal;
+  font-weight: 100 900;
+  font-stretch: 62% 125%;
+  font-display: swap;
+  src: url("fonts/archivo-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: "Azeret Mono";
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url("fonts/azeret-mono-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}

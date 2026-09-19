@@ -1,0 +1,277 @@
+/*
+ * App-specific additions to the PACT system (tokens.css + pact.css cover
+ * everything general). Everything here is pact- prefixed and built from
+ * var(--pact-*) tokens only, per the design skill's rule for a standalone
+ * page: "CSS a page needs that the system does not have goes in a third
+ * file linked after them."
+ */
+
+/* ── Dial: a range input + editable number ───────────────────────────────
+   The design skill's own repo has a `pact-dial` pattern for exactly this
+   (a native range input with aria-valuetext, a mono number beside it, a
+   word under it) but that CSS lives in the pact repo, not the portable
+   pact.css, so it's redefined here token-for-token in the same spirit.
+   One indigo (--pact-primary) drives the thumb in every state — a
+   "negative" aspect is signalled by the label text and aria-valuetext,
+   never by recolouring the control itself (rule 2: no second accent). */
+.pact-dial {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  margin: 6px 0 4px;
+  background: var(--pact-rule);
+  border-radius: 2px;
+  outline: none;
+}
+.pact-dial::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--pact-primary);
+  border: 2px solid var(--pact-bg);
+  box-shadow: 0 0 0 1px var(--pact-primary);
+  cursor: pointer;
+}
+.pact-dial::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--pact-primary);
+  border: 2px solid var(--pact-bg);
+  box-shadow: 0 0 0 1px var(--pact-primary);
+  cursor: pointer;
+}
+.pact-dial:disabled { opacity: 0.4; }
+.pact-dial:focus-visible {
+  outline: var(--pact-focus-ring);
+  outline-offset: var(--pact-focus-offset);
+}
+
+.pact-dial-label {
+  font-family: var(--pact-font-ui);
+  font-size: var(--pact-text-sm);
+  text-transform: lowercase;
+  letter-spacing: 0.02em;
+}
+.pact-dial-value {
+  -webkit-appearance: none;
+  appearance: none;
+  font-family: var(--pact-font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--pact-text-sm);
+  font-weight: 700;
+  text-align: right;
+  width: 6.5rem;
+  min-height: 32px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background: transparent;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+/* Buttons get a hairline hint that they're clickable; a focused/editing
+   text input gets the primary ring instead (rule: colour never the only
+   signal — the dotted underline carries the "editable" meaning too). */
+button.pact-dial-value { text-decoration: underline dotted var(--pact-rule); text-underline-offset: 3px; }
+.pact-dial-value:hover:not(:disabled) { border-color: var(--pact-rule); }
+.pact-dial-value:disabled { cursor: default; }
+input.pact-dial-value:focus {
+  border-color: var(--pact-primary);
+  outline: none;
+  background: var(--pact-surface);
+}
+.pact-dial-readout {
+  font-family: var(--pact-font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.75rem;
+  color: var(--pact-muted);
+  margin-top: 2px;
+}
+
+/* ── Checkbox (Include / Negative valence) ── */
+.pact-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--pact-ink);
+  border-radius: 3px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  position: relative;
+  background: var(--pact-bg);
+  flex-shrink: 0;
+}
+.pact-checkbox:checked {
+  background: var(--pact-primary);
+  border-color: var(--pact-primary);
+}
+.pact-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 5px;
+  height: 10px;
+  border: solid var(--pact-primary-ink);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.pact-checkbox:focus-visible {
+  outline: var(--pact-focus-ring);
+  outline-offset: var(--pact-focus-offset);
+}
+
+/* ── Segmented control (model selector, kind and direction toggles) ──
+   Real buttons with aria-pressed; the pressed one is the one indigo. */
+.pact-segmented {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  border: 2px solid var(--pact-ink);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.pact-segmented button {
+  flex: 1 1 auto;
+  font-family: var(--pact-font-ui);
+  font-size: var(--pact-text-sm);
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  padding: 6px 10px;
+  min-height: 32px;
+  background: var(--pact-bg);
+  color: var(--pact-ink);
+  border: none;
+  cursor: pointer;
+}
+.pact-segmented button + button { border-left: 2px solid var(--pact-ink); }
+.pact-segmented button[aria-pressed="true"] {
+  background: var(--pact-primary);
+  color: var(--pact-primary-ink);
+}
+.pact-segmented button:focus-visible {
+  outline: var(--pact-focus-ring);
+  outline-offset: -2px;
+}
+/* The large one is the model selector: three equal segments that never
+   wrap, even at 320px, so it always reads as one control. */
+.pact-segmented[data-size="lg"] {
+  display: flex;
+  width: 100%;
+  max-width: 32rem;
+}
+.pact-segmented[data-size="lg"] button {
+  flex: 1 1 0;
+  font-size: 0.95rem;
+  min-height: 48px;
+  padding: 0 var(--pact-space-1);
+}
+
+/* ── Interval input: best estimate + 90% judgment interval ── */
+.pact-interval {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--pact-space-1);
+}
+.pact-interval-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+.pact-interval-caption {
+  font-size: 0.75rem;
+  color: var(--pact-muted);
+}
+.pact-interval .pact-dial-value {
+  width: 100%;
+  text-align: left;
+}
+
+.pact-anchor {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pact-anchor .pact-aspect-name {
+  font-weight: 400;
+  font-size: 0.95rem;
+}
+
+/* ── Compare: three independent columns, no combined result ── */
+.pact-compare {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--pact-space-4);
+}
+@media (min-width: 48rem) {
+  .pact-compare { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+.pact-compare-col {
+  border-top: 3px solid var(--pact-ink);
+  padding-top: var(--pact-space-2);
+}
+
+/* ── Aspect card ── */
+.pact-aspect-card {
+  border: 2px solid var(--pact-ink);
+  padding: var(--pact-space-3);
+}
+.pact-aspect-card + .pact-aspect-card { margin-top: var(--pact-space-3); }
+.pact-aspect-card[data-disabled="true"] { opacity: 0.45; }
+
+.pact-aspect-name {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--pact-rule);
+  font-family: var(--pact-font-ui);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--pact-ink);
+  padding: 2px 2px;
+  min-width: 0;
+}
+.pact-aspect-name:focus {
+  outline: none;
+  border-bottom-color: var(--pact-primary);
+}
+
+/* ── Same-page tab bar (space / report / how-to-use) ─────────────────────
+   pact-tabs in pact.css assumes each tab is a real link to its own URL;
+   these three are client-side view switches on one page, so they're
+   buttons styled the same way rather than a re-skin of that anchor CSS. */
+.pact-tabbar {
+  margin-bottom: var(--pact-space-4);
+  border-bottom: 1px solid var(--pact-rule);
+}
+.pact-tabbar ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--pact-space-3);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pact-tabbtn {
+  display: inline-block;
+  background: none;
+  border: none;
+  color: var(--pact-ink);
+  font-family: var(--pact-font-ui);
+  font-weight: 700;
+  text-transform: lowercase;
+  line-height: 44px;
+  padding-inline: 4px;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+}
+.pact-tabbtn:hover { border-bottom-color: var(--pact-rule); }
+.pact-tabbtn[aria-current="page"] { border-bottom-color: var(--pact-primary); }
+.pact-tabbtn:focus-visible {
+  outline: var(--pact-focus-ring);
+  outline-offset: var(--pact-focus-offset);
+}

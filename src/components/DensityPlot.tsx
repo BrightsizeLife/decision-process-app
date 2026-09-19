@@ -19,6 +19,8 @@ interface DensityPlotProps {
   zeroLine?: boolean;
   zeroLineColor?: string;
   fillOpacity?: number;
+  tickFormat?: (n: number) => string;
+  zeroLabel?: string;
 }
 
 export const DensityPlot: React.FC<DensityPlotProps> = ({
@@ -30,8 +32,10 @@ export const DensityPlot: React.FC<DensityPlotProps> = ({
   showLegend = true,
   showAxes = true,
   zeroLine = false,
-  zeroLineColor = '#FF5757',
-  fillOpacity = 0.45,
+  zeroLineColor = '#c52012',
+  fillOpacity = 0.35,
+  tickFormat = (n) => n.toFixed(2),
+  zeroLabel = 'no diff',
 }) => {
   const margin = { top: 14, right: 14, bottom: showAxes ? 32 : 8, left: 8 };
   const innerW = width - margin.left - margin.right;
@@ -50,6 +54,11 @@ export const DensityPlot: React.FC<DensityPlotProps> = ({
           if (s.data[i] > hi) hi = s.data[i];
         }
       }
+      // A zero line is only useful if zero is on the axis.
+      if (zeroLine) {
+        lo = Math.min(lo, 0);
+        hi = Math.max(hi, 0);
+      }
       const pad = (hi - lo) * 0.05 || 0.05;
       lo -= pad;
       hi += pad;
@@ -64,7 +73,7 @@ export const DensityPlot: React.FC<DensityPlotProps> = ({
     let maxY = 0;
     for (const d of densities) for (const p of d.pts) if (p.y > maxY) maxY = p.y;
     return { lo, hi, densities, maxY };
-  }, [series, domain]);
+  }, [series, domain, zeroLine]);
 
   const xScale = d3.scaleLinear().domain([computed.lo, computed.hi]).range([0, innerW]);
   const yScale = d3.scaleLinear().domain([0, computed.maxY * 1.05 || 1]).range([innerH, 0]);
@@ -85,23 +94,27 @@ export const DensityPlot: React.FC<DensityPlotProps> = ({
   const xTicks = xScale.ticks(5);
 
   return (
-    <div className="w-full">
+    <figure className="pact-chart w-full">
       {showLegend && series.length > 1 && (
-        <div className="flex items-center gap-4 mb-2 text-xs font-mono uppercase tracking-widest">
+        <ul className="pact-legend">
           {series.map((s) => (
-            <div key={s.label} className="flex items-center gap-2">
-              <span className="inline-block w-3 h-3 rounded-sm" style={{ background: s.color }} />
-              <span style={{ color: s.color }}>{s.label}</span>
-            </div>
+            <li key={s.label}>
+              <span
+                className="inline-block w-3 h-3 rounded-full mr-1.5"
+                style={{ background: s.color }}
+                aria-hidden="true"
+              />
+              {s.label}
+            </li>
           ))}
-        </div>
+        </ul>
       )}
       <svg width="100%" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none">
         <g transform={`translate(${margin.left},${margin.top})`}>
           {computed.densities.map((d) => (
             <g key={d.label}>
               <path d={area(d.pts) || ''} fill={d.color} fillOpacity={fillOpacity} />
-              <path d={line(d.pts) || ''} stroke={d.color} strokeWidth={1.5} fill="none" />
+              <path d={line(d.pts) || ''} stroke={d.color} strokeWidth={2} fill="none" />
             </g>
           ))}
           {zeroLine && computed.lo <= 0 && computed.hi >= 0 && (
@@ -116,25 +129,26 @@ export const DensityPlot: React.FC<DensityPlotProps> = ({
                 strokeDasharray="4 4"
               />
               <text
-                x={xScale(0) + 6}
+                x={xScale(0) + (xScale(0) > innerW - 90 ? -6 : 6)}
                 y={12}
+                textAnchor={xScale(0) > innerW - 90 ? 'end' : 'start'}
                 fill={zeroLineColor}
                 fontSize={10}
-                fontFamily="Space Mono, monospace"
-                style={{ textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700 }}
+                fontFamily="var(--pact-font-num)"
+                style={{ textTransform: 'lowercase', letterSpacing: '0.05em', fontWeight: 700 }}
               >
-                no diff
+                {zeroLabel}
               </text>
             </>
           )}
           {showAxes && (
             <g transform={`translate(0,${innerH})`}>
-              <line x1={0} x2={innerW} y1={0} y2={0} stroke="#44413b" />
+              <line x1={0} x2={innerW} y1={0} y2={0} stroke="#e6e4df" />
               {xTicks.map((t, i) => (
                 <g key={i} transform={`translate(${xScale(t)},0)`}>
-                  <line y1={0} y2={4} stroke="#44413b" />
-                  <text y={16} textAnchor="middle" fontSize={10} fill="#8a8680" fontFamily="Space Mono, monospace">
-                    {t.toFixed(2)}
+                  <line y1={0} y2={4} stroke="#e6e4df" />
+                  <text y={16} textAnchor="middle" fontSize={10} fill="#5c5a55" fontFamily="var(--pact-font-num)">
+                    {tickFormat(t)}
                   </text>
                 </g>
               ))}
@@ -144,9 +158,9 @@ export const DensityPlot: React.FC<DensityPlotProps> = ({
                   y={28}
                   textAnchor="middle"
                   fontSize={10}
-                  fill="#8a8680"
-                  fontFamily="Space Mono, monospace"
-                  style={{ textTransform: 'uppercase', letterSpacing: '0.15em' }}
+                  fill="#5c5a55"
+                  fontFamily="var(--pact-font-ui)"
+                  style={{ textTransform: 'lowercase', letterSpacing: '0.1em' }}
                 >
                   {xLabel}
                 </text>
@@ -155,6 +169,6 @@ export const DensityPlot: React.FC<DensityPlotProps> = ({
           )}
         </g>
       </svg>
-    </div>
+    </figure>
   );
 };

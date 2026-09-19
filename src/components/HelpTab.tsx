@@ -1,103 +1,127 @@
 import React from 'react';
-import { COLORS } from '../lib/colors';
 
-const Section: React.FC<{ title: string; color?: string; children: React.ReactNode }> = ({
-  title,
-  color = COLORS.amber,
-  children,
-}) => (
-  <section className="mb-10">
-    <h2
-      className="font-display text-3xl md:text-4xl mb-4"
-      style={{ color }}
-    >
-      {title}
-    </h2>
-    <div className="text-[#f0ede6] space-y-3 leading-relaxed">{children}</div>
+const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+  <section className="pact-section" style={{ marginTop: 'var(--pact-space-6)' }}>
+    <h2 className="pact-h2">{title}</h2>
+    <div className="space-y-3" style={{ maxWidth: 'var(--pact-measure)' }}>
+      {children}
+    </div>
   </section>
 );
 
-const Term: React.FC<{ children: React.ReactNode; color?: string }> = ({ children, color = COLORS.cyan }) => (
-  <strong style={{ color }}>{children}</strong>
-);
-
 export const HelpTab: React.FC = () => (
-  <div className="border rounded-2xl p-6 md:p-10" style={{ borderColor: COLORS.dim, background: '#0e1018' }}>
-    <div className="font-mono uppercase tracking-widest text-xs text-[#8a8680] mb-2">how to use this</div>
-    <h1 className="font-display text-4xl md:text-6xl text-[#f0ede6] mb-8 leading-tight">
-      Decisions are <span style={{ color: COLORS.coral }}>multiple aspects</span> arguing with each other.
-    </h1>
+  <div>
+    <p className="cs-kicker">how to use this</p>
+    <h1 className="pact-h1">your gut already leans. this makes it show its work.</h1>
 
-    <Section title="The purpose" color={COLORS.amber}>
+    <Section title="what this is for">
       <p>
-        Complex decisions involve many aspects, each with varying importance and presence across your choices.
-        This tool helps you think through the tradeoffs by acknowledging that:
+        This is less a calculator than a way to push your intuition to represent itself, confusion
+        included. You put numbers on what matters, how each choice measures up, and how unsure you
+        are, and the tool plays out 5,000 ways those judgments could turn out. Often the result
+        lands close to what your heart already said. When it doesn't, that gap is worth a look.
       </p>
-      <ul className="list-none space-y-2 pl-0">
-        <li>· <Term>Some aspects matter more than others</Term> <span className="text-[#8a8680]">(importance)</span></li>
-        <li>· <Term color={COLORS.lime}>Each choice exhibits these aspects to different degrees</Term> <span className="text-[#8a8680]">(presence)</span></li>
-        <li>· <Term color={COLORS.purple}>You're uncertain about both</Term> <span className="text-[#8a8680]">(uncertainty)</span></li>
-      </ul>
-    </Section>
-
-    <Section title="Key concepts" color={COLORS.cyan}>
-      <h3 className="font-display text-2xl text-[#f0ede6] mt-2">Presence</h3>
       <p>
-        <Term>Presence</Term> measures how much a choice exhibits a particular aspect. For example:
-      </p>
-      <ul className="list-none space-y-2 pl-0">
-        <li>— If your aspect is "Career Growth" and Choice A offers many advancement opportunities, it has <Term color={COLORS.lime}>high presence</Term>.</li>
-        <li>— If Choice B offers limited growth, it has <Term color={COLORS.coral}>low presence</Term> for this aspect.</li>
-      </ul>
-
-      <h3 className="font-display text-2xl text-[#f0ede6] mt-6">The possible-worlds framework</h3>
-      <p>Think of uncertainty as exploring <em>possible worlds</em>:</p>
-      <ul className="list-none space-y-2 pl-0">
-        <li>— <Term>Zero uncertainty</Term> = only one possible world. You're absolutely certain.</li>
-        <li>— <Term color={COLORS.coral}>High uncertainty</Term> = many possible worlds. The future could go many ways.</li>
-      </ul>
-      <p>
-        The distribution curves show where you think things will <em>likely</em> end up across these possible worlds.
+        Whatever a model reports is a statement about your own judgments. It is never an objective
+        probability that one choice is actually better.
       </p>
     </Section>
 
-    <Section title="Using the sliders" color={COLORS.purple}>
-      <h3 className="font-display text-2xl text-[#f0ede6]">For each aspect, ask yourself:</h3>
-      <div className="space-y-4 mt-3">
-        <div>
-          <h4 className="font-mono uppercase tracking-widest text-sm text-[#f0ede6]">Importance</h4>
-          <p className="italic text-[#8a8680]">"How much does this aspect matter to my overall decision?"</p>
-        </div>
-        <div>
-          <h4 className="font-mono uppercase tracking-widest text-sm text-[#f0ede6]">Importance Uncertainty</h4>
-          <p className="italic text-[#8a8680]">"How confident am I about this aspect's importance?"</p>
-        </div>
-        <div>
-          <h4 className="font-mono uppercase tracking-widest text-sm text-[#f0ede6]">Presence (per choice)</h4>
-          <p className="italic text-[#8a8680]">"To what degree does this choice exhibit this aspect?"</p>
-        </div>
-        <div>
-          <h4 className="font-mono uppercase tracking-widest text-sm text-[#f0ede6]">Presence Uncertainty (per choice)</h4>
-          <p className="italic text-[#8a8680]">"How confident am I about this assessment?"</p>
-        </div>
-      </div>
-    </Section>
-
-    <Section title="Special features" color={COLORS.lime}>
-      <ul className="list-none space-y-3 pl-0">
+    <Section title="three separate models">
+      <p>
+        Pick one at the top. Each has its own criteria, inputs and results, and they are never
+        combined, averaged or normalized against each other. Use the compare tab to read the
+        conclusions side by side afterward.
+      </p>
+      <ul className="pact-rows">
         <li>
-          · <Term>Include in analysis</Term> — uncheck to exclude an aspect temporarily (it'll dim out).
+          <strong>priority 0–1</strong>: a weight for each criterion, a 0–1 presence score for each
+          choice.
         </li>
         <li>
-          · <Term color={COLORS.coral}>Negative valence</Term> — check when high presence is <em>bad</em> (cost, risk, time-sink). The aspect will <em>subtract</em> from the score.
+          <strong>money / WTP</strong>: actual annual dollars, or what a difference is worth to you
+          per year.
+        </li>
+        <li>
+          <strong>swing ratings</strong>: how valuable the full swing from worst to best is on each
+          criterion.
         </li>
       </ul>
     </Section>
 
-    <Section title="Interpreting results" color={COLORS.coral}>
+    <Section title="priority 0–1">
       <p>
-        The Report tab shows probabilities and confidence intervals based on <Term color={COLORS.amber}>5,000 simulated scenarios</Term>.
-        These help you understand not just <em>which</em> choice is better, but <em>how confident</em> you can be in that read.
+        Give each criterion a weight from 0 to 1 and each choice a presence score from 0 to 1.
+        Weights need not sum to anything; they are normalized internally:
+      </p>
+      <pre className="pact-formula">score = SUM(weight × presence) / SUM(weight)</pre>
+      <ul className="pact-rows">
+        <li>
+          A weight of 0.95 is a decision weight you chose, not a 95% chance of anything.
+        </li>
+        <li>
+          <strong>negative valence</strong>: check it when high presence is bad (a hassle, a risk).
+          Presence is reversed (1 − presence) before it is scored.
+        </li>
+        <li>
+          <strong>no dollar values here.</strong> If cost matters, turn it into a 0–1 preference
+          score and write down what 0 and 1 mean in the anchor boxes.
+        </li>
+      </ul>
+      <p>The result is a dimensionless priority-weighted score. It is not dollars and not utility.</p>
+    </Section>
+
+    <Section title="money / WTP">
+      <p>Two kinds of criterion, both in annual dollars, added into one net value:</p>
+      <ul className="pact-rows">
+        <li>
+          <strong>direct money</strong>: enter the actual annual amount for each choice and say
+          whether it is a cost or a benefit. The model takes the difference.
+        </li>
+        <li>
+          <strong>pairwise value</strong>: enter one signed dollar value for the difference between
+          the choices. Positive = the first choice's advantage, negative = the second's. The second
+          choice is the $0 reference.
+        </li>
+      </ul>
+      <p>
+        "I'd pay $5,000 a year to bring the first choice up to the second on this" is entered as
+        -$5,000.
+      </p>
+      <pre className="pact-formula">net value = SUM of signed annual-dollar contributions</pre>
+      <p>
+        No importance weights, no 0–1 scores, no normalization. A dollar figure is never multiplied
+        by an importance score.
+      </p>
+    </Section>
+
+    <Section title="swing ratings">
+      <p>
+        For each criterion, name a worst and a best relevant level, then place each choice between
+        them (0 = worst, 1 = best). Then rate how valuable that full swing is: 100 for the most
+        valuable swing, lower numbers for the others.
+      </p>
+      <pre className="pact-formula">score = SUM(rating / SUM(ratings) × position)</pre>
+      <p>Ratings are normalized internally. Swing ratings are never mixed with the other two models.</p>
+    </Section>
+
+    <Section title="the dials">
+      <p>
+        Click any number to type an exact value; dragging is optional. Under every input a live{' '}
+        <strong>judgment interval</strong> shows the mean (μ) and the middle 90% of simulated
+        outcomes, so you can see what a setting does without scrolling to the charts.
+      </p>
+      <p>
+        For 0–1 inputs the uncertainty dial widens or narrows that interval. For dollars and swing
+        ratings you type the best estimate and the low and high ends of your 90% interval directly.
+      </p>
+    </Section>
+
+    <Section title="reading the results">
+      <p>
+        Every probability is phrased "Given the judgments and uncertainty entered into this model…"
+        because that is all it is. Sensitivity shows which criteria your conclusion leans on most, and
+        what changes if you drop one.
       </p>
     </Section>
   </div>

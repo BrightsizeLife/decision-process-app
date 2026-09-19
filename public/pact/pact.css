@@ -1,0 +1,741 @@
+/*
+ * pact.css: the page chrome and general patterns of the PACT design, for
+ * use outside the pact repo. Link tokens.css first; every colour, size,
+ * and gap in here is a var(--pact-*) from that file.
+ *
+ * This is a distillation of app/globals.css in the repo. The repo file
+ * assumes Tailwind's reset and carries the flow-specific pieces (budget
+ * bar, stepper, dials, plots, process map). This file assumes nothing:
+ * a small reset sits at the top so it works on a blank page.
+ *
+ * Class prefixes: pact- for this design, cs- for pieces borrowed
+ * unchanged from the Cheap Sensationalism system.
+ */
+
+/* ── Reset (small, on purpose) ────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+h1, h2, h3, h4, p, ul, ol, dl, dd, figure, blockquote {
+  margin: 0;
+}
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+button, input, select, textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────── */
+html {
+  color-scheme: light; /* White by decision. See the box at the top of tokens.css. */
+  background: var(--pact-bg);
+}
+body {
+  margin: 0;
+  background: var(--pact-bg);
+  color: var(--pact-ink);
+  font-family: var(--pact-font-ui);
+  font-size: var(--pact-text-base);
+  line-height: var(--pact-leading-base);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Text never gets close to the edge on small screens, and never runs
+   wider than a comfortable line on big ones. */
+.pact-page {
+  width: 100%;
+  max-width: var(--pact-page-max);
+  margin-inline: auto;
+  padding-inline: var(--pact-space-2);
+}
+@media (min-width: 48rem) {
+  .pact-page {
+    padding-inline: var(--pact-space-4);
+  }
+}
+main.pact-page {
+  padding-top: var(--pact-space-6);
+}
+
+.pact-prose {
+  max-width: var(--pact-measure);
+}
+.pact-prose p + p {
+  margin-top: var(--pact-space-2);
+}
+/* Prose lists get markers. Definition rows (.pact-rows) inside a prose
+   section are excluded: they draw their own rules and would otherwise
+   inherit bullets and an indent, because `.pact-prose ul` outranks
+   `.pact-rows` on specificity. */
+.pact-prose ul:not(.pact-rows),
+.pact-prose ol:not(.pact-rows) {
+  padding-left: 1.25em;
+  margin-top: var(--pact-space-2);
+}
+.pact-prose ul:not(.pact-rows) { list-style: disc; }
+.pact-prose ol:not(.pact-rows) { list-style: decimal; }
+.pact-prose li::marker {
+  font-family: var(--pact-font-num);
+  font-weight: 700;
+}
+.pact-prose :not(.pact-rows) > li + li {
+  margin-top: var(--pact-space-1);
+}
+
+/* Sections breathe. Rows inside them do not. */
+.pact-section + .pact-section {
+  margin-top: var(--pact-section-gap);
+}
+
+/* ── Focus ────────────────────────────────────────────────────────────── */
+/* One ring, everywhere, in the action colour. Never removed. */
+:focus-visible {
+  outline: var(--pact-focus-ring);
+  outline-offset: var(--pact-focus-offset);
+  border-radius: 2px;
+}
+
+/* ── Skip link ────────────────────────────────────────────────────────── */
+/* Off-screen until it has focus; then the first thing on the page. */
+.pact-skip {
+  position: absolute;
+  left: var(--pact-space-2);
+  top: -100px;
+  padding: var(--pact-space-1) var(--pact-space-2);
+  background: var(--pact-primary);
+  color: var(--pact-primary-ink);
+  font-weight: 700;
+  z-index: 100;
+}
+.pact-skip:focus-visible {
+  top: var(--pact-space-2);
+}
+
+/* ── Type roles ───────────────────────────────────────────────────────── */
+/* The kicker says where you are. */
+.cs-kicker {
+  font-family: var(--pact-font-ui);
+  font-size: var(--pact-text-kicker);
+  font-weight: 900;
+  letter-spacing: var(--pact-tracking-widest);
+  text-transform: uppercase;
+  color: var(--pact-muted);
+}
+/* A kicker as a section heading: a label for a section a person scans.
+   Block, with the gap below it, so no inline style is needed. */
+h2.cs-kicker {
+  display: block;
+  margin: 0 0 var(--pact-space-2);
+}
+
+/* The h1 says what the page does, as a sentence. */
+.pact-h1 {
+  font-size: var(--pact-text-h1);
+  font-weight: 900;
+  /* The wide cut of Archivo's width axis. A subway sign is wide because
+     it is read at a glance from across a platform; a headline is read the
+     same way. Headings only — body text stays at normal width. */
+  font-variation-settings: "wdth" var(--pact-display-wdth);
+  line-height: var(--pact-leading-tight);
+  letter-spacing: var(--pact-tracking-tight);
+  text-transform: lowercase;
+  margin: var(--pact-space-1) 0 0;
+  text-wrap: balance;
+}
+.pact-h2 {
+  font-size: var(--pact-text-h2);
+  font-weight: 900;
+  font-variation-settings: "wdth" var(--pact-display-wdth);
+  line-height: var(--pact-leading-snug);
+  letter-spacing: var(--pact-tracking-tight);
+  text-transform: lowercase;
+  margin: 0 0 var(--pact-space-2);
+}
+.pact-h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: lowercase;
+  margin: 0 0 var(--pact-space-1);
+}
+
+/* The one-sentence summary under every h1. If it is not enough to act,
+   the page is too complicated. */
+.pact-lede {
+  font-size: 1.125em;
+  line-height: var(--pact-leading-snug);
+  max-width: var(--pact-measure);
+  margin: var(--pact-space-2) 0 0;
+  text-wrap: pretty;
+}
+
+.pact-muted { color: var(--pact-muted); }
+.pact-small { font-size: var(--pact-text-sm); }
+
+/* Every number that matters is Azeret Mono, with tabular figures. */
+.pact-num {
+  font-family: var(--pact-font-num);
+  font-variant-numeric: tabular-nums;
+}
+.pact-num-big {
+  font-family: var(--pact-font-num);
+  font-size: var(--pact-text-num);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Formula display: a line of code that is also a sentence. Long lines
+   wrap; a scroll region would need to be focusable. */
+.pact-formula {
+  font-family: var(--pact-font-num);
+  font-size: 1.1em;
+  background: var(--pact-surface);
+  padding: var(--pact-space-2);
+  margin: var(--pact-space-2) 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border-left: 6px solid var(--pact-ink);
+}
+
+/* ── Links and CTAs ───────────────────────────────────────────────────── */
+a {
+  color: var(--pact-primary);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.15em;
+}
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* [bracket] CTA: a text link with weight. The brackets are in the copy,
+   not the CSS, so screen readers read them the way sighted people see
+   them. */
+.pact-cta {
+  display: inline-block;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--pact-primary);
+  padding: var(--pact-space-1) 0;
+  min-height: 44px; /* target size */
+  line-height: 28px;
+}
+.pact-cta:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+button.pact-cta {
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* The filled button: the one action on a page. */
+.pact-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 var(--pact-space-3);
+  background: var(--pact-primary);
+  color: var(--pact-primary-ink);
+  font-weight: 700;
+  font-size: 1.05em;
+  text-decoration: none;
+  border: 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background var(--pact-motion) ease;
+}
+.pact-btn:hover {
+  background: var(--pact-primary-hover);
+  text-decoration: none;
+}
+.pact-btn:focus-visible {
+  outline-offset: 3px;
+}
+.pact-btn:disabled {
+  background: var(--pact-muted);
+  cursor: not-allowed;
+}
+
+/* ── Header and footer ────────────────────────────────────────────────── */
+.pact-header {
+  border-bottom: 1px solid var(--pact-rule);
+}
+.pact-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--pact-space-1) var(--pact-space-3);
+  min-height: 64px;
+  padding-block: var(--pact-space-1);
+}
+.pact-wordmark {
+  font-weight: 900;
+  font-size: 1.5rem;
+  letter-spacing: var(--pact-tracking-tight);
+  text-decoration: none;
+  color: var(--pact-ink);
+  line-height: 44px;
+}
+.pact-nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--pact-space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pact-nav a {
+  display: inline-block;
+  color: var(--pact-ink);
+  text-decoration: none;
+  font-weight: 700;
+  line-height: 44px; /* 44px tall tap targets without extra markup. */
+  padding-inline: 4px;
+  border-bottom: 3px solid transparent;
+}
+.pact-nav a:hover {
+  border-bottom-color: var(--pact-rule);
+}
+.pact-nav a[aria-current="page"] {
+  border-bottom-color: var(--pact-primary);
+}
+
+.pact-footer {
+  border-top: 1px solid var(--pact-rule);
+  margin-top: var(--pact-section-gap);
+  padding-block: var(--pact-space-4);
+  color: var(--pact-muted);
+  font-size: var(--pact-text-sm);
+}
+.pact-footer ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--pact-space-1) var(--pact-space-2);
+  list-style: none;
+  margin: var(--pact-space-2) 0 0;
+  padding: 0;
+}
+.pact-footer a {
+  display: inline-block; /* Inline text ignores line-height for hit-testing; this makes the 32px box real, above the 24px floor. */
+  color: var(--pact-ink);
+  line-height: 32px;
+}
+
+/* ── Stats ────────────────────────────────────────────────────────────── */
+/* A definition list, so a screen reader hears "participants, 0". */
+.pact-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--pact-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.pact-stat {
+  border-top: 3px solid var(--pact-ink);
+  padding-top: var(--pact-space-1);
+}
+.pact-stat .pact-num-big {
+  display: block;
+  margin-top: 4px;
+}
+.pact-stat-live .pact-num-big {
+  color: var(--pact-signal); /* The single "live" number on a page. Large text: passes. */
+}
+
+/* ── Tables ───────────────────────────────────────────────────────────── */
+/* Wide tables scroll inside their own box. The page never scrolls
+   sideways. Give the wrapper tabindex="0" and an aria-label so a keyboard
+   user can scroll it. */
+.pact-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.pact-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--pact-text-sm);
+}
+.pact-table caption {
+  text-align: left;
+  font-weight: 700;
+  padding-bottom: var(--pact-space-1);
+}
+.pact-table th,
+.pact-table td {
+  text-align: left;
+  padding: 10px 12px 10px 0;
+  border-bottom: 1px solid var(--pact-rule);
+  vertical-align: top;
+}
+.pact-table th {
+  font-size: var(--pact-text-kicker);
+  font-weight: 900;
+  letter-spacing: var(--pact-tracking-widest);
+  text-transform: uppercase;
+  color: var(--pact-muted);
+}
+.pact-table td.pact-num,
+.pact-table th.pact-num {
+  text-align: right;
+  padding-right: 0;
+  white-space: nowrap;
+}
+.pact-table tr:last-child td {
+  border-bottom: 2px solid var(--pact-ink);
+}
+.pact-table tfoot td {
+  font-weight: 700;
+  border-bottom: 0;
+}
+
+/* ── Dimension marks ──────────────────────────────────────────────────── */
+/* Colour is never the only signal: the mark always sits next to the name. */
+.pact-dim-mark {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+  vertical-align: baseline;
+  border: 1px solid rgba(10, 11, 16, 0.25);
+}
+.pact-dim-mark[data-dimension="practices"] { background: var(--pact-dim-practices); }
+.pact-dim-mark[data-dimension="architecture"] { background: var(--pact-dim-architecture); }
+.pact-dim-mark[data-dimension="culture"] { background: var(--pact-dim-culture); }
+.pact-dim-mark[data-dimension="technology"] { background: var(--pact-dim-technology); }
+.pact-dim-mark[data-dimension="outcomes"] { background: var(--pact-dim-outcomes); }
+
+.pact-dim-section {
+  border-left: 6px solid var(--pact-ink);
+  padding-left: var(--pact-space-2);
+}
+.pact-dim-section[data-dimension="practices"] { border-left-color: var(--pact-dim-practices); }
+.pact-dim-section[data-dimension="architecture"] { border-left-color: var(--pact-dim-architecture); }
+.pact-dim-section[data-dimension="culture"] { border-left-color: var(--pact-dim-culture); }
+.pact-dim-section[data-dimension="technology"] { border-left-color: var(--pact-dim-technology); }
+.pact-dim-section[data-dimension="outcomes"] { border-left-color: var(--pact-dim-outcomes); }
+
+/* ── Notices ──────────────────────────────────────────────────────────── */
+.pact-notice {
+  border: 2px solid var(--pact-ink);
+  padding: var(--pact-space-2);
+  max-width: var(--pact-measure);
+}
+.pact-notice p {
+  margin: 0;
+}
+
+/* A banner above the h1: full width, unmistakable, for something the
+   reader must know before anything else on the page (the site uses it
+   for "these predictions are simulated"). */
+.pact-banner {
+  border-top: 6px solid var(--pact-ink);
+  border-bottom: 1px solid var(--pact-rule);
+  padding: var(--pact-space-2) 0;
+  margin-bottom: var(--pact-space-4);
+}
+.pact-banner p {
+  margin: 0;
+  max-width: var(--pact-measure);
+}
+.pact-banner .cs-kicker {
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* [WIP] is honest. The culture orange as a chip with ink text on it (6.5:1);
+   orange text on white would fail. The reason travels as visually hidden text. */
+.cs-wip-tag {
+  display: inline-block;
+  background: var(--pact-dim-culture);
+  color: var(--pact-ink);
+  font-size: var(--pact-text-kicker);
+  font-weight: 900;
+  letter-spacing: var(--pact-tracking-widest);
+  padding: 2px 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+  border-radius: 2px;
+}
+
+/* Body-size warning text. The words carry the meaning; the colour echoes. */
+.pact-signal-text {
+  color: var(--pact-signal-ink);
+  font-weight: 700;
+}
+
+/* ── Independence strip ───────────────────────────────────────────────── */
+.pact-independence {
+  border-top: 3px solid var(--pact-ink);
+  padding-top: var(--pact-space-2);
+  max-width: var(--pact-measure);
+}
+
+/* ── Definition rows ──────────────────────────────────────────────────── */
+/* A list of items with a heavy rule on top and hairlines between. */
+.pact-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pact-rows > li {
+  padding: var(--pact-space-2) 0;
+  border-bottom: 1px solid var(--pact-rule);
+}
+.pact-rows > li:first-child {
+  border-top: 2px solid var(--pact-ink);
+}
+
+/* ── Visually hidden ──────────────────────────────────────────────────── */
+/* Read by screen readers, not seen. For live regions and extra context. */
+.pact-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Tabs ─────────────────────────────────────────────────────────────── */
+/* A strip of links, not a tab widget: each tab is a page with a URL. */
+.pact-tabs {
+  margin-bottom: var(--pact-space-4);
+  border-bottom: 1px solid var(--pact-rule);
+}
+.pact-tabs ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--pact-space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.pact-tabs a {
+  display: inline-block;
+  color: var(--pact-ink);
+  text-decoration: none;
+  font-weight: 700;
+  line-height: 44px;
+  padding-inline: 4px;
+  border-bottom: 3px solid transparent;
+}
+.pact-tabs a:hover {
+  border-bottom-color: var(--pact-rule);
+}
+.pact-tabs a[aria-current="page"] {
+  border-bottom-color: var(--pact-primary);
+}
+
+/* ── Inputs ───────────────────────────────────────────────────────────── */
+.pact-input {
+  width: 100%;
+  max-width: var(--pact-measure);
+  min-height: 44px;
+  padding: 0 12px;
+  border: 2px solid var(--pact-ink);
+  border-radius: 4px;
+  background: var(--pact-bg);
+  color: var(--pact-ink);
+}
+.pact-field {
+  margin-top: var(--pact-space-2);
+}
+.pact-field-label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+.pact-fieldset {
+  border: 0;
+  padding: 0;
+  margin: var(--pact-space-2) 0 0;
+}
+.pact-fieldset legend {
+  font-weight: 700;
+  padding: 0;
+  margin-bottom: 4px;
+}
+.pact-radio {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+.pact-radio input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--pact-primary);
+}
+.pact-summary {
+  cursor: pointer;
+  font-weight: 900;
+  text-transform: lowercase;
+  line-height: 44px;
+}
+
+/* ── The one modal ────────────────────────────────────────────────────── */
+.pact-dialog {
+  border: 3px solid var(--pact-ink);
+  padding: var(--pact-space-3);
+  max-width: min(90vw, 28rem);
+  background: var(--pact-bg);
+  color: var(--pact-ink);
+}
+.pact-dialog::backdrop {
+  background: rgba(10, 11, 16, 0.6);
+}
+
+/* ── The four words ───────────────────────────────────────────────────── */
+/* The mark: practices, architecture, culture, technology stacked, the
+   initials in the action colour so the acronym reads itself. */
+.pact-mark {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--pact-text-h1);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: var(--pact-tracking-tight);
+  margin: var(--pact-space-2) 0 0;
+}
+.pact-mark-word {
+  display: block;
+}
+.pact-mark-initial {
+  color: var(--pact-primary);
+}
+
+/* ── Charts ───────────────────────────────────────────────────────────── */
+/* An SVG in a <figure>, the title as HTML above it so it wraps, a legend
+   whenever there are two or more series, a caption that says what the
+   data is. Marks take their colour from a class, never an inline hex, so
+   every colour on a chart is a token. The five series classes are for
+   *which*; the seq and div classes are for *how much* and *which way*.
+   See references/colour.md for the order and the ceiling. */
+.pact-chart {
+  margin: 0;
+}
+.pact-chart-title {
+  font-weight: 700;
+  margin: 0 0 var(--pact-space-1);
+  max-width: var(--pact-measure);
+}
+.pact-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.pact-chart figcaption {
+  font-size: var(--pact-text-sm);
+  color: var(--pact-muted);
+  margin-top: var(--pact-space-1);
+  max-width: var(--pact-measure);
+}
+.pact-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px var(--pact-space-2);
+  font-size: var(--pact-text-sm);
+  margin: 0 0 var(--pact-space-1);
+  padding: 0;
+  list-style: none;
+}
+.pact-legend li,
+.pact-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.pact-legend i {
+  width: 12px;
+  height: 12px;
+  display: inline-block;
+}
+/* Axes recede; the zero line does not. */
+.pact-axis { stroke: var(--pact-rule); stroke-width: 1; }
+.pact-axis-zero { stroke: var(--pact-ink); stroke-width: 2; }
+/* Text on a chart wears text tokens, never the series colour. */
+.pact-chart-label { font-family: var(--pact-font-ui); font-size: 12px; fill: var(--pact-ink); }
+.pact-chart-label-muted { font-family: var(--pact-font-ui); font-size: 11px; fill: var(--pact-muted); }
+.pact-chart-value { font-family: var(--pact-font-num); font-size: 12px; fill: var(--pact-ink); font-variant-numeric: tabular-nums; }
+/* A scale strip under a sequential or diverging chart. */
+.pact-scale { display: flex; height: 14px; margin-top: var(--pact-space-1); }
+.pact-scale i { flex: 1; }
+.pact-scale-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--pact-font-num);
+  font-size: 0.75rem;
+  color: var(--pact-muted);
+  font-variant-numeric: tabular-nums;
+}
+/* Horizontal bars in HTML, not SVG. An SVG scales its text with its
+   viewBox, so a 640-unit chart on a 320px phone halves every label to
+   6px, and axe cannot see it. Rows are a grid: label, bar, value. The
+   bar is a flex row of <i> segments, each with a fill class and its
+   width as a percentage (the data), 2px of page between segments. If a
+   chart has to be SVG (a heatmap, a scatter), keep its viewBox no wider
+   than 320 units, or put its labels in HTML beside it. */
+.pact-bars {
+  display: grid;
+  grid-template-columns: minmax(5rem, 1fr) 3fr auto;
+  gap: 6px var(--pact-space-2);
+  align-items: center;
+  margin: 0;
+}
+.pact-bar-label { font-size: var(--pact-text-sm); }
+.pact-bar { display: flex; gap: 2px; height: 18px; }
+.pact-bar > i { display: block; height: 100%; }
+.pact-bar-value {
+  font-family: var(--pact-font-num);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--pact-text-sm);
+  text-align: right;
+}
+.pact-bars-axis {
+  grid-column: 2;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--pact-font-num);
+  font-size: 0.75rem;
+  color: var(--pact-muted);
+  border-top: 2px solid var(--pact-ink);
+  padding-top: 4px;
+}
+/* Series: which one. Assign in the order technology, architecture,
+   culture, practices, outcomes; never cycle. */
+.pact-fill-practices { fill: var(--pact-dim-practices); background: var(--pact-dim-practices); }
+.pact-fill-architecture { fill: var(--pact-dim-architecture); background: var(--pact-dim-architecture); }
+.pact-fill-culture { fill: var(--pact-dim-culture); background: var(--pact-dim-culture); }
+.pact-fill-technology { fill: var(--pact-dim-technology); background: var(--pact-dim-technology); }
+.pact-fill-outcomes { fill: var(--pact-dim-outcomes); background: var(--pact-dim-outcomes); }
+/* Sequential: how much. */
+.pact-fill-seq-1 { fill: var(--pact-seq-1); background: var(--pact-seq-1); }
+.pact-fill-seq-2 { fill: var(--pact-seq-2); background: var(--pact-seq-2); }
+.pact-fill-seq-3 { fill: var(--pact-seq-3); background: var(--pact-seq-3); }
+.pact-fill-seq-4 { fill: var(--pact-seq-4); background: var(--pact-seq-4); }
+.pact-fill-seq-5 { fill: var(--pact-seq-5); background: var(--pact-seq-5); }
+.pact-fill-seq-6 { fill: var(--pact-seq-6); background: var(--pact-seq-6); }
+.pact-fill-seq-7 { fill: var(--pact-seq-7); background: var(--pact-seq-7); }
+/* Diverging: which way from zero. */
+.pact-fill-div-cool-3 { fill: var(--pact-div-cool-3); background: var(--pact-div-cool-3); }
+.pact-fill-div-cool-2 { fill: var(--pact-div-cool-2); background: var(--pact-div-cool-2); }
+.pact-fill-div-cool-1 { fill: var(--pact-div-cool-1); background: var(--pact-div-cool-1); }
+.pact-fill-div-mid { fill: var(--pact-div-mid); background: var(--pact-div-mid); }
+.pact-fill-div-warm-1 { fill: var(--pact-div-warm-1); background: var(--pact-div-warm-1); }
+.pact-fill-div-warm-2 { fill: var(--pact-div-warm-2); background: var(--pact-div-warm-2); }
+.pact-fill-div-warm-3 { fill: var(--pact-div-warm-3); background: var(--pact-div-warm-3); }
